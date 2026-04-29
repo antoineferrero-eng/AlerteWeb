@@ -1,7 +1,7 @@
 import { Component, AfterViewInit, inject } from '@angular/core';
 import { Map, NavigationControl } from 'maplibre-gl';
 import { forkJoin } from 'rxjs';
-import { ApiService } from '../../api.service';
+import { ApiService } from '../../core/services/api.service';
 
 @Component({
   selector: 'app-map',
