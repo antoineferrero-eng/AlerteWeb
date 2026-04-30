@@ -1,0 +1,22 @@
+<div class="list-container">
+  <h2 class="list-title">Listes des alertes</h2>
+  
+  <div class="list-scroll-area">
+    <div 
+      class="alert-item" 
+      *ngFor="let bulletin of bulletins()"
+      [id]="'dept-' + bulletin.departement.num"
+      [ngClass]="getAlertClass(getMaxLevel(bulletin.alertes))"
+      [class.selected-item]="isSelected(bulletin)"
+      (click)="selectDepartement(bulletin)"
+    >
+      <div class="item-info">
+        <span class="dept-name">{{ bulletin.departement.num }} - {{ getDeptName(bulletin.departement.num) }}</span>
+        <span class="alert-summary">{{ getAlertSummary(bulletin.alertes) }}</span>
+      </div>
+      <div class="item-level">
+        {{ getMaxLevel(bulletin.alertes) }}
+      </div>
+    </div>
+  </div>
+</div>

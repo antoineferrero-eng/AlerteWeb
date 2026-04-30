@@ -1,0 +1,40 @@
+<div class="card-container" *ngIf="bulletin()">
+  <h1 class="card-title">{{ departementName() }}</h1>
+  
+  <div class="card-content">
+    <div class="section-today" [ngClass]="getAlertClass()">
+      <div class="top-row">
+        <div class="title-temp">
+          <span class="day-label">Aujourd’hui</span>
+          <span class="temp-val" *ngIf="meteoToday()">{{ meteoToday().daily.temperature_2m_max | number:'1.0-0' }}°C</span>
+          <span class="temp-val" *ngIf="!meteoToday()">-</span>
+        </div>
+        <div class="alert-number">{{ maxAlertLevel() }}</div>
+      </div>
+      <div class="details-bottom">
+        <div class="alert-text-wrapper">
+          <p>{{ alertSummaryToday() }}</p>
+        </div>
+        <button class="btn-prevenir" type="button">Prévenir</button>
+      </div>
+    </div>
+
+    <div class="separator" *ngIf="maxAlertLevel() === maxAlertLevelTomorrow() && maxAlertLevel() > 0"></div>
+
+    <div class="section-tomorrow" [ngClass]="getAlertClassTomorrow()">
+      <div class="top-row">
+        <div class="title-temp">
+          <span class="day-label">Demain</span>
+          <span class="temp-val" *ngIf="meteoTomorrow()">{{ meteoTomorrow().daily.temperature_2m_max | number:'1.0-0' }}°C</span>
+          <span class="temp-val" *ngIf="!meteoTomorrow()">-</span>
+        </div>
+        <div class="alert-number">{{ maxAlertLevelTomorrow() }}</div>
+      </div>
+      <div class="details-bottom">
+        <div class="alert-text-wrapper">
+          <p>{{ alertSummaryTomorrow() }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

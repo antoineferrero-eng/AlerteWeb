@@ -1,7 +1,7 @@
 import { Routes } from '@angular/router';
-import { MapComponent } from './features/map/map';
+import { HomeComponent } from './features/home/home';
 
 export const routes: Routes = [
-  { path: 'carte', component: MapComponent },
-  { path: '', redirectTo: '/carte', pathMatch: 'full' }
+  { path: 'accueil', component: HomeComponent },
+  { path: '', redirectTo: 'accueil', pathMatch: 'full' }
 ];
