@@ -1,11 +1,12 @@
+<app-navbar></app-navbar>
 <div class="dashboard">
   <div class="map-wrapper-home">
-    <app-map></app-map>
+    <app-map [filterLevel]="filterLevel()"></app-map>
   </div>
   <div class="card-wrapper-home">
-    <app-card></app-card>
+    <app-card [filterLevel]="filterLevel()"></app-card>
   </div>
   <div class="list-wrapper-home">
-    <app-list></app-list>
+    <app-list [filterLevel]="filterLevel()"></app-list>
   </div>
 </div>

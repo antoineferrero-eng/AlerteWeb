@@ -1,4 +1,4 @@
-import { Component, inject, computed, effect, signal } from '@angular/core';
+import { Component, inject, computed, effect, signal, input } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { NgIf, NgClass, DecimalPipe } from '@angular/common';
 import { SelectionService } from '../../core/services/selection.service';
@@ -17,6 +17,7 @@ export class Card {
   private http = inject(HttpClient);
   
   bulletin = this.selectionService.selectedBulletin;
+  filterLevel = input<number | null>(null);
   
   meteoToday = signal<any>(null);
   meteoTomorrow = signal<any>(null);
@@ -75,39 +76,56 @@ export class Card {
     return DEPARTEMENTS_MAP[b.departement.num] || `Département ${b.departement.num}`;
   });
 
-  maxAlertLevel = computed(() => {
+  filteredAlertsToday = computed(() => {
     const b = this.bulletin();
-    if (b && b.alertes && b.alertes.length > 0) {
-      return Math.max(...b.alertes.map((a: any) => a.level));
-    }
-    return 0;
+    const level = this.filterLevel();
+    if (!b || !b.alertes) return [];
+    if (level !== null) return b.alertes.filter((a: any) => a.level === level);
+    return b.alertes;
+  });
+
+  filteredAlertsTomorrow = computed(() => {
+    const b = this.bulletinTomorrow();
+    const level = this.filterLevel();
+    if (!b || !b.alertes) return [];
+    if (level !== null) return b.alertes.filter((a: any) => a.level === level);
+    return b.alertes;
+  });
+
+  maxAlertLevel = computed(() => {
+    const alertes = this.filteredAlertsToday();
+    return alertes.length > 0 ? Math.max(...alertes.map((a: any) => a.level)) : 0;
   });
 
   maxAlertLevelTomorrow = computed(() => {
-    const b = this.bulletinTomorrow();
-    if (b && b.alertes && b.alertes.length > 0) {
-      return Math.max(...b.alertes.map((a: any) => a.level));
-    }
-    return 0;
+    const alertes = this.filteredAlertsTomorrow();
+    return alertes.length > 0 ? Math.max(...alertes.map((a: any) => a.level)) : 0;
   });
 
   alertSummaryToday = computed(() => {
-    return this.generateAlertSummary(this.bulletin()?.alertes);
+    return this.generateAlertSummary(this.filteredAlertsToday(), this.filterLevel());
   });
 
   alertSummaryTomorrow = computed(() => {
-    return this.generateAlertSummary(this.bulletinTomorrow()?.alertes);
+    return this.generateAlertSummary(this.filteredAlertsTomorrow(), this.filterLevel());
   });
 
-  generateAlertSummary(alertes: any[] | undefined): string {
+  generateAlertSummary(alertes: any[], filterLevel: number | null): string {
     if (!alertes || alertes.length === 0) {
       return "Aucune alerte.";
     }
     
     const maxLevel = Math.max(...alertes.map(a => a.level));
+
+    if (filterLevel !== null) {
+      if (maxLevel === 1) return "Pas d'alerte majeure.";
+      if (maxLevel === 2) return "Alertes mineures.";
+      if (maxLevel === 3) return "Alertes importantes.";
+      if (maxLevel >= 4) return "Alertes majeures.";
+    }
     
     if (maxLevel === 1) {
-      return "Pas d'alerte majeure";
+      return "Pas d'alerte majeure.";
     }
 
     const typesOfMaxLevel = alertes

@@ -1,0 +1,23 @@
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: rgb(227, 111, 111);
+  color: #007bff;
+}
+
+.nav-links {
+  display: flex;
+  list-style: none;
+  gap: 20px;
+}
+
+.nav-links a {
+  color: 007bff;
+  text-decoration: none;
+}
+
+.nav-links a.active {
+  border-bottom: 2px solid white;
+}

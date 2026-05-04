@@ -1,13 +1,13 @@
-import { Component, OnInit, inject, signal, effect, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, computed, input } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { NgFor, NgClass } from '@angular/common';
+import { NgFor, NgClass, NgIf } from '@angular/common';
 import { SelectionService } from '../../core/services/selection.service';
 import { DEPARTEMENTS_MAP } from '../../core/constants/departements'; 
 
 @Component({
   selector: 'app-list',
   standalone: true,
-  imports: [NgFor, NgClass],
+  imports: [NgFor, NgClass, NgIf],
   templateUrl: './list.html',
   styleUrl: './list.css'
 })
@@ -15,7 +15,19 @@ export class List implements OnInit {
   private http = inject(HttpClient);
   public selectionService = inject(SelectionService);
   
-  bulletins = signal<any[]>([]);
+  filterLevel = input<number | null>(null);
+  allBulletins = signal<any[]>([]);
+
+  filteredBulletins = computed(() => {
+    const bulletins = this.allBulletins();
+    const level = this.filterLevel();
+
+    if (level === null) {
+      return bulletins;
+    }
+
+    return bulletins.filter(b => b.alertes && b.alertes.some((a: any) => a.level === level));
+  });
 
   selectedNum = computed(() => {
     const selected = this.selectionService.selectedBulletin();
@@ -40,14 +52,19 @@ export class List implements OnInit {
     const todayStr = new Date().toISOString().split('T')[0];
     
     this.http.get<any[]>(`http://localhost:8080/bulletins?date=${todayStr}`)
-      .subscribe(data => {
-        const filtered = data.filter(b => DEPARTEMENTS_MAP[b.departement.num]);
+      .subscribe({
+        next: (data) => {
+          const filtered = data.filter(b => DEPARTEMENTS_MAP[b.departement.num]);
 
-        const sorted = filtered.sort((a, b) => {
-          return a.departement.num.localeCompare(b.departement.num, undefined, { numeric: true });
-        });
-        
-        this.bulletins.set(sorted);
+          const sorted = filtered.sort((a, b) => {
+            return a.departement.num.localeCompare(b.departement.num, undefined, { numeric: true });
+          });
+          
+          this.allBulletins.set(sorted);
+        },
+        error: (err) => {
+          console.error(err);
+        }
       });
   }
 
@@ -63,9 +80,23 @@ export class List implements OnInit {
     return DEPARTEMENTS_MAP[num] || `Département ${num}`;
   }
 
+  getFilteredAlerts(alertes: any[]): any[] {
+    if (!alertes) return [];
+    const level = this.filterLevel();
+    if (level !== null) {
+      return alertes.filter((a: any) => a.level === level);
+    }
+    return alertes;
+  }
+
   getMaxLevel(alertes: any[]): number {
     if (!alertes || alertes.length === 0) return 0;
     return Math.max(...alertes.map(a => a.level));
+  }
+
+  getDisplayLevel(alertes: any[]): number {
+    const filtered = this.getFilteredAlerts(alertes);
+    return this.getMaxLevel(filtered);
   }
 
   getAlertClass(level: number): string {
@@ -80,23 +111,25 @@ export class List implements OnInit {
     if (!alertes || alertes.length === 0) return "Aucune alerte.";
     
     const maxLevel = this.getMaxLevel(alertes);
+    const filterLevel = this.filterLevel();
     
-    if (maxLevel === 1) {
-      return "Pas d'alerte majeure";
+    if (filterLevel !== null) {
+      if (maxLevel === 1) return "Pas d'alerte majeure.";
+      if (maxLevel === 2) return "Alertes mineures.";
+      if (maxLevel === 3) return "Alertes importantes.";
+      if (maxLevel >= 4) return "Alertes majeures.";
     }
 
+    if (maxLevel === 1) return "Pas d'alerte majeure.";
+    
     const typesOfMaxLevel = alertes
       .filter(a => a.level === maxLevel)
       .map(a => this.getAlertTypeName(a.type.toString()))
       .join(', ');
 
-    if (maxLevel === 2) {
-      return `Il y a des alertes mineures pour : ${typesOfMaxLevel}`;
-    } else if (maxLevel === 3) {
-      return `Il y a des alertes pour : ${typesOfMaxLevel}`;
-    } else if (maxLevel >= 4) {
-      return `Il y a des alertes majeures pour : ${typesOfMaxLevel}`;
-    }
+    if (maxLevel === 2) return `Il y a des alertes mineures pour : ${typesOfMaxLevel}`;
+    if (maxLevel === 3) return `Il y a des alertes pour : ${typesOfMaxLevel}`;
+    if (maxLevel >= 4) return `Il y a des alertes majeures pour : ${typesOfMaxLevel}`;
 
     return "Aucune alerte.";
   }

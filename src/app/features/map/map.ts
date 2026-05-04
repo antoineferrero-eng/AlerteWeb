@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, inject, effect, NgZone } from '@angular/core';
+import { Component, AfterViewInit, inject, effect, NgZone, input } from '@angular/core';
 import { NgStyle } from '@angular/common';
 import { Map, LngLatBoundsLike } from 'maplibre-gl';
 import { forkJoin } from 'rxjs';
@@ -19,11 +19,11 @@ export class MapComponent implements AfterViewInit {
   private zone = inject(NgZone);
   private map!: Map;
   private allBulletins: Bulletin[] = [];
-
   private geoJsonData: any = null;
   private isMapReady = false;
-
   private readonly FRANCE_BOUNDS: LngLatBoundsLike = [[-5.14, 41.33], [9.56, 51.12]];
+
+  filterLevel = input<number | null>(null);
 
   mapConfig = {
     width: '100%',
@@ -34,6 +34,13 @@ export class MapComponent implements AfterViewInit {
     effect(() => {
       const selected = this.selectionService.selectedBulletin();
       this.updateMapSelection(selected);
+    });
+
+    effect(() => {
+      const level = this.filterLevel();
+      if (this.isMapReady && this.allBulletins.length > 0) {
+        this.applyMapColors(level);
+      }
     });
   }
 
@@ -119,40 +126,58 @@ export class MapComponent implements AfterViewInit {
           this.map.on('mouseenter', 'couche-couleur-dynamique', () => this.map.getCanvas().style.cursor = 'pointer');
           this.map.on('mouseleave', 'couche-couleur-dynamique', () => this.map.getCanvas().style.cursor = '');
 
-          const couleursAplaties: any[] = [];
-          bulletins.forEach((bulletin: any) => {
-            const code = bulletin.departement.num.toString();
-            let maxLevel = 0;
-            if (bulletin.alertes && bulletin.alertes.length > 0) {
-              maxLevel = Math.max(...bulletin.alertes.map((a: any) => a.level));
-            }
-
-            let color = '#d2f3ff';
-            if (maxLevel === 1) color = '#31aa35';
-            if (maxLevel === 2) color = '#fff600';
-            if (maxLevel === 3) color = '#ffb600';
-            if (maxLevel >= 4) color = '#ff0000';
-
-            couleursAplaties.push(code, color);
-            if (code === '69') couleursAplaties.push('69D', color, '69M', color);
-            if (code === '20') couleursAplaties.push('2A', color, '2B', color);
-          });
-
-          if (couleursAplaties.length > 0) {
-            const expressionMatch = [
-              'match',
-              ['get', 'ref:INSEE'],
-              ...couleursAplaties,
-              '#d2f3ff'
-            ];
-            this.map.setPaintProperty('couche-couleur-dynamique', 'fill-color', expressionMatch);
-          }
-
           this.isMapReady = true;
+          this.applyMapColors(this.filterLevel());
           this.updateMapSelection(this.selectionService.selectedBulletin());
         }
       });
     });
+  }
+
+  getColorForLevel(level: number): string {
+    if (level === 1) return '#31aa35';
+    if (level === 2) return '#fff600';
+    if (level === 3) return '#ffb600';
+    if (level >= 4) return '#ff0000';
+    return '#d2f3ff';
+  }
+
+  applyMapColors(filterLevel: number | null) {
+    const couleursAplaties: any[] = [];
+    
+    this.allBulletins.forEach((bulletin: any) => {
+      const code = bulletin.departement.num.toString();
+      let color = '#d2f3ff';
+
+      if (filterLevel !== null) {
+        const hasAlert = bulletin.alertes && bulletin.alertes.some((a: any) => a.level === filterLevel);
+        if (hasAlert) {
+          color = this.getColorForLevel(filterLevel);
+        } else {
+          color = '#e0e0e0';
+        }
+      } else {
+        let maxLevel = 0;
+        if (bulletin.alertes && bulletin.alertes.length > 0) {
+          maxLevel = Math.max(...bulletin.alertes.map((a: any) => a.level));
+        }
+        color = this.getColorForLevel(maxLevel);
+      }
+
+      couleursAplaties.push(code, color);
+      if (code === '69') couleursAplaties.push('69D', color, '69M', color);
+      if (code === '20') couleursAplaties.push('2A', color, '2B', color);
+    });
+
+    if (couleursAplaties.length > 0) {
+      const expressionMatch = [
+        'match',
+        ['get', 'ref:INSEE'],
+        ...couleursAplaties,
+        '#d2f3ff'
+      ];
+      this.map.setPaintProperty('couche-couleur-dynamique', 'fill-color', expressionMatch);
+    }
   }
 
   private updateMapSelection(selected: Bulletin | null) {
@@ -172,8 +197,7 @@ export class MapComponent implements AfterViewInit {
       } else {
         this.map.setFilter('highlight-departement', ['==', 'ref:INSEE', '']);
       }
-    } catch (e) {
-    }
+    } catch (e) {}
   }
 
   private calculateBounds(feature: any): LngLatBoundsLike {
