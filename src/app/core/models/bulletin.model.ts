@@ -15,8 +15,10 @@ export interface Site {
 }
 
 export interface Alerte {
+  id: number;
   type: number;
   level: number;
+  bulletinId: number;
 }
 
 export interface Departement {
@@ -26,26 +28,36 @@ export interface Departement {
   sites: Site[];
 }
 
-export interface DailyMeteoData {
-  daily: {
-    time: string[];
-    temperature_2m_max: number[];
-    temperature_2m_min: number[];
-    precipitation_sum: number[];
-    wind_speed_10m_max: number[];
-    weather_code: number[];
-    sunrise: string[];
-    sunset: string[];
-  };
-}
-
 export interface DailyMeteo {
   id: number;
-  data: string; 
+  date: string;
+  weatherCode: number;
+  tempMax: number;
+  tempMin: number;
+  apparentTempMax: number;
+  apparentTempMin: number;
+  sunrise: string;
+  sunset: string;
+  daylightDuration: number;
+  sunshineDuration: number;
+  uvIndexMax: number;
+  uvIndexClearSkyMax: number;
+  rainSum: number;
+  showersSum: number;
+  snowfallSum: number;
+  precipitationSum: number;
+  precipitationHours: number;
+  precipitationProbabilityMax: number;
+  windSpeedMax: number;
+  windGustsMax: number;
+  windDirectionDominant: number;
+  shortwaveRadiationSum: number;
+  evapotranspiration: number;
 }
 
 export interface Bulletin {
   id: number;
+  date: string;
   alertes: Alerte[];
   dailyMeteos: DailyMeteo[];
   departement: Departement;

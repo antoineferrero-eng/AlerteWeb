@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, effect } from '@angular/core';
+import { Component, OnInit, inject, signal, effect, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { NgFor, NgClass } from '@angular/common';
 import { SelectionService } from '../../core/services/selection.service';
@@ -17,12 +17,17 @@ export class List implements OnInit {
   
   bulletins = signal<any[]>([]);
 
+  selectedNum = computed(() => {
+    const selected = this.selectionService.selectedBulletin();
+    return selected?.departement?.num;
+  });
+
   constructor() {
     effect(() => {
-      const selected = this.selectionService.selectedBulletin();
-      if (selected) {
+      const num = this.selectedNum();
+      if (num) {
         setTimeout(() => {
-          const element = document.getElementById('dept-' + selected.departement.num);
+          const element = document.getElementById('dept-' + num);
           if (element) {
             element.scrollIntoView({ behavior: 'smooth', block: 'center' });
           }
@@ -34,11 +39,10 @@ export class List implements OnInit {
   ngOnInit() {
     const todayStr = new Date().toISOString().split('T')[0];
     
-    this.http.get<any[]>(`http://localhost:8080/bulletins/date/${todayStr}`)
+    this.http.get<any[]>(`http://localhost:8080/bulletins?date=${todayStr}`)
       .subscribe(data => {
         const filtered = data.filter(b => DEPARTEMENTS_MAP[b.departement.num]);
 
-        // 2. On trie le résultat filtré
         const sorted = filtered.sort((a, b) => {
           return a.departement.num.localeCompare(b.departement.num, undefined, { numeric: true });
         });
@@ -52,10 +56,7 @@ export class List implements OnInit {
   }
 
   isSelected(bulletin: any): boolean {
-    const selected = this.selectionService.selectedBulletin();
-    return selected !== null && 
-           selected.departement !== undefined && 
-           selected.departement.num === bulletin.departement.num;
+    return this.selectedNum() === bulletin.departement.num;
   }
 
   getDeptName(num: string): string {

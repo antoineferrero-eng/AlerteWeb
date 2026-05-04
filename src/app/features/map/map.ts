@@ -1,4 +1,4 @@
-import { Component, AfterViewInit, inject, effect } from '@angular/core';
+import { Component, AfterViewInit, inject, effect, NgZone } from '@angular/core';
 import { NgStyle } from '@angular/common';
 import { Map, LngLatBoundsLike } from 'maplibre-gl';
 import { forkJoin } from 'rxjs';
@@ -16,6 +16,7 @@ import { Bulletin } from '../../core/models/bulletin.model';
 export class MapComponent implements AfterViewInit {
   private apiService = inject(ApiService);
   private selectionService = inject(SelectionService);
+  private zone = inject(NgZone);
   private map!: Map;
   private allBulletins: Bulletin[] = [];
 
@@ -104,13 +105,15 @@ export class MapComponent implements AfterViewInit {
           });
 
           this.map.on('click', 'couche-couleur-dynamique', (e) => {
-            if (e.features && e.features.length > 0) {
-              const codeInsee = e.features[0].properties?.['ref:INSEE'];
-              const matchingBulletin = this.allBulletins.find(b => b.departement.num === codeInsee.toString());
-              if (matchingBulletin) {
-                this.selectionService.updateSelection(matchingBulletin);
+            this.zone.run(() => {
+              if (e.features && e.features.length > 0) {
+                const codeInsee = e.features[0].properties?.['ref:INSEE'];
+                const matchingBulletin = this.allBulletins.find(b => b.departement.num === codeInsee.toString());
+                if (matchingBulletin) {
+                  this.selectionService.updateSelection(matchingBulletin);
+                }
               }
-            }
+            });
           });
 
           this.map.on('mouseenter', 'couche-couleur-dynamique', () => this.map.getCanvas().style.cursor = 'pointer');
@@ -155,18 +158,21 @@ export class MapComponent implements AfterViewInit {
   private updateMapSelection(selected: Bulletin | null) {
     if (!this.isMapReady || !this.map) return;
 
-    if (selected) {
-      this.map.setFilter('highlight-departement', ['==', 'ref:INSEE', selected.departement.num]);
+    try {
+      if (selected && selected.departement && selected.departement.num) {
+        this.map.setFilter('highlight-departement', ['==', 'ref:INSEE', selected.departement.num.toString()]);
 
-      if (this.geoJsonData) {
-        const feature = this.geoJsonData.features.find((f: any) => f.properties?.['ref:INSEE'] === selected.departement.num);
-        if (feature) {
-          const bounds = this.calculateBounds(feature);
-          this.map.fitBounds(bounds, { padding: 40, maxZoom: 8, duration: 1000 });
+        if (this.geoJsonData) {
+          const feature = this.geoJsonData.features.find((f: any) => f.properties?.['ref:INSEE'] === selected.departement.num.toString());
+          if (feature && feature.geometry && feature.geometry.coordinates) {
+            const bounds = this.calculateBounds(feature);
+            this.map.fitBounds(bounds, { padding: 40, maxZoom: 8, duration: 1000 });
+          }
         }
+      } else {
+        this.map.setFilter('highlight-departement', ['==', 'ref:INSEE', '']);
       }
-    } else {
-      this.map.setFilter('highlight-departement', ['==', 'ref:INSEE', '']);
+    } catch (e) {
     }
   }
 
@@ -174,19 +180,25 @@ export class MapComponent implements AfterViewInit {
     let minLng = 180, minLat = 90, maxLng = -180, maxLat = -90;
 
     const processCoordinates = (coords: any[]) => {
+      if (!coords) return;
       for (const coord of coords) {
-        if (typeof coord[0] === 'number') {
+        if (Array.isArray(coord) && typeof coord[0] === 'number') {
           minLng = Math.min(minLng, coord[0]);
           minLat = Math.min(minLat, coord[1]);
           maxLng = Math.max(maxLng, coord[0]);
           maxLat = Math.max(maxLat, coord[1]);
-        } else {
+        } else if (Array.isArray(coord)) {
           processCoordinates(coord);
         }
       }
     };
 
     processCoordinates(feature.geometry.coordinates);
+    
+    if (minLng > maxLng || minLat > maxLat) {
+      return this.FRANCE_BOUNDS;
+    }
+    
     return [[minLng, minLat], [maxLng, maxLat]];
   }
 }

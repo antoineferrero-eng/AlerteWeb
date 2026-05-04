@@ -18,10 +18,10 @@ export class ApiService {
   }
 
   getBulletinByDepartement(num: string | number): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/bulletins/departement/${num}`);
+    return this.http.get<any[]>(`${this.API_URL}/bulletins?dep=${num}`);
   }
 
   getBulletinsByDate(date: string): Observable<any[]> {
-    return this.http.get<any[]>(`${this.API_URL}/bulletins/date/${date}`);
+    return this.http.get<any[]>(`${this.API_URL}/bulletins?date=${date}`);
   }
 }

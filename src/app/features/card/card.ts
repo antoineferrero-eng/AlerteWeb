@@ -40,7 +40,7 @@ export class Card {
         this.getBulletins(todayStr).subscribe(bulletins => {
           const b = bulletins.find(b => b.departement.num === numDept);
           if (b && b.dailyMeteos && b.dailyMeteos.length > 0) {
-            this.meteoToday.set(JSON.parse(b.dailyMeteos[0].data));
+            this.meteoToday.set(b.dailyMeteos[0]);
           } else {
             this.meteoToday.set(null);
           }
@@ -50,7 +50,7 @@ export class Card {
           const b = bulletins.find(b => b.departement.num === numDept);
           this.bulletinTomorrow.set(b || null);
           if (b && b.dailyMeteos && b.dailyMeteos.length > 0) {
-            this.meteoTomorrow.set(JSON.parse(b.dailyMeteos[0].data));
+            this.meteoTomorrow.set(b.dailyMeteos[0]);
           } else {
             this.meteoTomorrow.set(null);
           }
@@ -61,7 +61,7 @@ export class Card {
 
   private getBulletins(date: string): Observable<any[]> {
     if (!Card.cache.has(date)) {
-      const request = this.http.get<any[]>(`http://localhost:8080/bulletins/date/${date}`).pipe(
+      const request = this.http.get<any[]>(`http://localhost:8080/bulletins?date=${date}`).pipe(
         shareReplay(1)
       );
       Card.cache.set(date, request);
@@ -74,6 +74,7 @@ export class Card {
     if (!b) return '';
     return DEPARTEMENTS_MAP[b.departement.num] || `Département ${b.departement.num}`;
   });
+
   maxAlertLevel = computed(() => {
     const b = this.bulletin();
     if (b && b.alertes && b.alertes.length > 0) {
