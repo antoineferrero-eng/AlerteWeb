@@ -1,0 +1,10 @@
+{
+  "/departements": {
+    "target": "http://localhost:8080",
+    "secure": false
+  },
+  "/bulletins": {
+    "target": "http://localhost:8080",
+    "secure": false
+  }
+}

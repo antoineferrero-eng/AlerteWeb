@@ -1,8 +1,22 @@
 <nav class="navbar">
-  <div class="logo">Mon App</div>
-  <ul class="nav-links">
-    <li><a routerLink="/home" routerLinkActive="active">Accueil</a></li>
-    <li><a routerLink="/map" routerLinkActive="active">Carte</a></li>
-    <li><a routerLink="/list" routerLinkActive="active">Liste</a></li>
+  <div class="logo">
+    <img src="favicon.ico" alt="Logo" class="logo-icon">
+    <a class="nav-links" routerLink="/home" routerLinkActive="active" (click)="closeMenu()">d@cAlerte</a>
+  </div>
+  <button class="hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen" aria-label="Toggle menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <ul class="nav-links" [class.open]="isMenuOpen">
+    <li><a routerLink="/home/1" routerLinkActive="active" (click)="closeMenu()">Vent violent</a></li>
+    <li><a routerLink="/home/2" routerLinkActive="active" (click)="closeMenu()">Pluie-inondation</a></li>
+    <li><a routerLink="/home/3" routerLinkActive="active" (click)="closeMenu()">Orages</a></li>
+    <li><a routerLink="/home/4" routerLinkActive="active" (click)="closeMenu()">Crues</a></li>
+    <li><a routerLink="/home/5" routerLinkActive="active" (click)="closeMenu()">Neige/verglas</a></li>
+    <li><a routerLink="/home/6" routerLinkActive="active" (click)="closeMenu()">Canicule</a></li>
+    <li><a routerLink="/home/7" routerLinkActive="active" (click)="closeMenu()">Grand froid</a></li>
+    <li><a routerLink="/home/8" routerLinkActive="active" (click)="closeMenu()">Avalanches</a></li>
+    <li><a routerLink="/home/9" routerLinkActive="active" (click)="closeMenu()">Vagues-submersion</a></li>
   </ul>
 </nav>

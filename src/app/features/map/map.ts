@@ -1,10 +1,11 @@
-import { Component, AfterViewInit, inject, effect, NgZone, input } from '@angular/core';
+import { Component, AfterViewInit, inject, effect, NgZone } from '@angular/core';
 import { NgStyle } from '@angular/common';
 import { Map, LngLatBoundsLike } from 'maplibre-gl';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { SelectionService } from '../../core/services/selection.service';
 import { Bulletin } from '../../core/models/bulletin.model';
+import { MAP_COLORS, DEFAULT_MAP_COLOR, getDateString } from '../../core/constants/alertes.config';
 
 @Component({
   selector: 'app-map',
@@ -23,7 +24,7 @@ export class MapComponent implements AfterViewInit {
   private isMapReady = false;
   private readonly FRANCE_BOUNDS: LngLatBoundsLike = [[-5.14, 41.33], [9.56, 51.12]];
 
-  filterLevel = input<number | null>(null);
+  filterType = this.selectionService.selectedType;
 
   mapConfig = {
     width: '100%',
@@ -37,9 +38,9 @@ export class MapComponent implements AfterViewInit {
     });
 
     effect(() => {
-      const level = this.filterLevel();
+      const typeId = this.filterType();
       if (this.isMapReady && this.allBulletins.length > 0) {
-        this.applyMapColors(level);
+        this.applyMapColors(typeId);
       }
     });
   }
@@ -55,7 +56,7 @@ export class MapComponent implements AfterViewInit {
       attributionControl: false,
       trackResize: true
     });
-    
+
     this.map.dragRotate.disable();
     this.map.keyboard.disable();
     this.map.touchZoomRotate.disableRotation();
@@ -65,7 +66,7 @@ export class MapComponent implements AfterViewInit {
     });
 
     this.map.on('load', () => {
-      const today = new Date().toISOString().split('T')[0];
+      const today = getDateString();
 
       forkJoin({
         geoJson: this.apiService.getDepartmentsGeoJson(),
@@ -105,10 +106,10 @@ export class MapComponent implements AfterViewInit {
             type: 'line',
             source: 'departements',
             paint: {
-              'line-color': '#45cdff',
-              'line-width': 3 
+              'line-color': '#000000',
+              'line-width': 1
             },
-            filter: ['==', 'ref:INSEE', ''] 
+            filter: ['==', 'ref:INSEE', '']
           });
 
           this.map.on('click', 'couche-couleur-dynamique', (e) => {
@@ -127,7 +128,7 @@ export class MapComponent implements AfterViewInit {
           this.map.on('mouseleave', 'couche-couleur-dynamique', () => this.map.getCanvas().style.cursor = '');
 
           this.isMapReady = true;
-          this.applyMapColors(this.filterLevel());
+          this.applyMapColors(this.filterType());
           this.updateMapSelection(this.selectionService.selectedBulletin());
         }
       });
@@ -135,29 +136,27 @@ export class MapComponent implements AfterViewInit {
   }
 
   getColorForLevel(level: number): string {
-    if (level === 1) return '#31aa35';
-    if (level === 2) return '#fff600';
-    if (level === 3) return '#ffb600';
-    if (level >= 4) return '#ff0000';
-    return '#d2f3ff';
+    return MAP_COLORS[level] || DEFAULT_MAP_COLOR;
   }
 
-  applyMapColors(filterLevel: number | null) {
+  applyMapColors(filterType: number | null) {
     const couleursAplaties: any[] = [];
-    
+
     this.allBulletins.forEach((bulletin: any) => {
       const code = bulletin.departement.num.toString();
-      let color = '#d2f3ff';
+      let color = DEFAULT_MAP_COLOR;
 
-      if (filterLevel !== null) {
-        const hasAlert = bulletin.alertes && bulletin.alertes.some((a: any) => a.level === filterLevel);
-        if (hasAlert) {
-          color = this.getColorForLevel(filterLevel);
-        } else {
-          color = '#e0e0e0';
-        }
-      } else {
+      if (filterType !== null) {
         let maxLevel = 0;
+        if (bulletin.alertes && bulletin.alertes.length > 0) {
+          const specificAlert = bulletin.alertes.find((a: any) => a.type === filterType);
+          if (specificAlert) {
+            maxLevel = specificAlert.level;
+          }
+        }
+        color = this.getColorForLevel(maxLevel);
+      } else {
+        let maxLevel = 1;
         if (bulletin.alertes && bulletin.alertes.length > 0) {
           maxLevel = Math.max(...bulletin.alertes.map((a: any) => a.level));
         }
@@ -165,8 +164,6 @@ export class MapComponent implements AfterViewInit {
       }
 
       couleursAplaties.push(code, color);
-      if (code === '69') couleursAplaties.push('69D', color, '69M', color);
-      if (code === '20') couleursAplaties.push('2A', color, '2B', color);
     });
 
     if (couleursAplaties.length > 0) {
@@ -174,7 +171,7 @@ export class MapComponent implements AfterViewInit {
         'match',
         ['get', 'ref:INSEE'],
         ...couleursAplaties,
-        '#d2f3ff'
+        DEFAULT_MAP_COLOR
       ];
       this.map.setPaintProperty('couche-couleur-dynamique', 'fill-color', expressionMatch);
     }
@@ -191,13 +188,13 @@ export class MapComponent implements AfterViewInit {
           const feature = this.geoJsonData.features.find((f: any) => f.properties?.['ref:INSEE'] === selected.departement.num.toString());
           if (feature && feature.geometry && feature.geometry.coordinates) {
             const bounds = this.calculateBounds(feature);
-            this.map.fitBounds(bounds, { padding: 40, maxZoom: 8, duration: 1000 });
+            this.map.fitBounds(bounds, { padding: 80, maxZoom: 7, duration: 1000 });
           }
         }
       } else {
         this.map.setFilter('highlight-departement', ['==', 'ref:INSEE', '']);
       }
-    } catch (e) {}
+    } catch (e) { }
   }
 
   private calculateBounds(feature: any): LngLatBoundsLike {
@@ -218,11 +215,11 @@ export class MapComponent implements AfterViewInit {
     };
 
     processCoordinates(feature.geometry.coordinates);
-    
+
     if (minLng > maxLng || minLat > maxLat) {
       return this.FRANCE_BOUNDS;
     }
-    
+
     return [[minLng, minLat], [maxLng, maxLat]];
   }
 }

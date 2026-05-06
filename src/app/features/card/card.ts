@@ -1,68 +1,70 @@
 import { Component, inject, computed, effect, signal, input } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
 import { NgIf, NgClass, DecimalPipe } from '@angular/common';
 import { SelectionService } from '../../core/services/selection.service';
-import { Observable, shareReplay } from 'rxjs';
+import { ApiService } from '../../core/services/api.service';
+import { Observable, shareReplay, catchError, of } from 'rxjs';
 import { DEPARTEMENTS_MAP } from '../../core/constants/departements';
+import { Bulletin, DailyMeteo, Alerte } from '../../core/models/bulletin.model';
+import { ALERT_TYPES, ALERT_CLASSES, DEFAULT_ALERT_CLASS, MAP_COLORS, DEFAULT_MAP_COLOR, getDateString } from '../../core/constants/alertes.config';
 
 @Component({
   selector: 'app-card',
   standalone: true,
   imports: [NgIf, NgClass, DecimalPipe],
   templateUrl: './card.html',
-  styleUrl: './card.css'
+  styleUrl: './card.css',
+  host: {
+    '[style.--color-alert-1]': 'MAP_COLORS[1]',
+    '[style.--color-alert-2]': 'MAP_COLORS[2]',
+    '[style.--color-alert-3]': 'MAP_COLORS[3]',
+    '[style.--color-alert-4]': 'MAP_COLORS[4]',
+    '[style.--color-alert-default]': 'DEFAULT_MAP_COLOR'
+  }
 })
 export class Card {
   private selectionService = inject(SelectionService);
-  private http = inject(HttpClient);
+  private apiService = inject(ApiService);
   
-  bulletin = this.selectionService.selectedBulletin;
-  filterLevel = input<number | null>(null);
-  
-  meteoToday = signal<any>(null);
-  meteoTomorrow = signal<any>(null);
-  bulletinTomorrow = signal<any>(null);
+  readonly MAP_COLORS = MAP_COLORS;
+  readonly DEFAULT_MAP_COLOR = DEFAULT_MAP_COLOR;
 
-  private static cache = new Map<string, Observable<any[]>>();
+  filterLevel = input<number | null>(null);
+  bulletin = this.selectionService.selectedBulletin;
+  
+  meteoToday = signal<any | null>(null);
+  meteoTomorrow = signal<any | null>(null);
+  bulletinTomorrow = signal<Bulletin | null>(null);
+
+  private static cache = new Map<string, Observable<Bulletin[]>>();
 
   constructor() {
     effect(() => {
       const current = this.bulletin();
       if (current) {
         const numDept = current.departement.num;
-        
-        const today = new Date();
-        const tomorrow = new Date(today);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        
-        const todayStr = today.toISOString().split('T')[0];
-        const tomorrowStr = tomorrow.toISOString().split('T')[0];
+        const todayStr = getDateString(0);
+        const tomorrowStr = getDateString(1);
 
         this.getBulletins(todayStr).subscribe(bulletins => {
-          const b = bulletins.find(b => b.departement.num === numDept);
-          if (b && b.dailyMeteos && b.dailyMeteos.length > 0) {
-            this.meteoToday.set(b.dailyMeteos[0]);
-          } else {
-            this.meteoToday.set(null);
-          }
+          const b = bulletins.find(bulletin => bulletin.departement.num === numDept);
+          this.meteoToday.set(b?.dailyMeteos?.[0] || null);
         });
 
         this.getBulletins(tomorrowStr).subscribe(bulletins => {
-          const b = bulletins.find(b => b.departement.num === numDept);
+          const b = bulletins.find(bulletin => bulletin.departement.num === numDept);
           this.bulletinTomorrow.set(b || null);
-          if (b && b.dailyMeteos && b.dailyMeteos.length > 0) {
-            this.meteoTomorrow.set(b.dailyMeteos[0]);
-          } else {
-            this.meteoTomorrow.set(null);
-          }
+          this.meteoTomorrow.set(b?.dailyMeteos?.[0] || null);
         });
       }
     });
   }
 
-  private getBulletins(date: string): Observable<any[]> {
+  private getBulletins(date: string): Observable<Bulletin[]> {
     if (!Card.cache.has(date)) {
-      const request = this.http.get<any[]>(`http://localhost:8080/bulletins?date=${date}`).pipe(
+      const request = this.apiService.getBulletinsByDate(date).pipe(
+        catchError(err => {
+          return of([]);
+        }),
         shareReplay(1)
       );
       Card.cache.set(date, request);
@@ -72,106 +74,78 @@ export class Card {
 
   departementName = computed(() => {
     const b = this.bulletin();
-    if (!b) return '';
-    return DEPARTEMENTS_MAP[b.departement.num] || `Département ${b.departement.num}`;
-  });
-
-  filteredAlertsToday = computed(() => {
-    const b = this.bulletin();
-    const level = this.filterLevel();
-    if (!b || !b.alertes) return [];
-    if (level !== null) return b.alertes.filter((a: any) => a.level === level);
-    return b.alertes;
-  });
-
-  filteredAlertsTomorrow = computed(() => {
-    const b = this.bulletinTomorrow();
-    const level = this.filterLevel();
-    if (!b || !b.alertes) return [];
-    if (level !== null) return b.alertes.filter((a: any) => a.level === level);
-    return b.alertes;
+    return b ? (DEPARTEMENTS_MAP[b.departement.num] || `Département ${b.departement.num}`) : '';
   });
 
   maxAlertLevel = computed(() => {
-    const alertes = this.filteredAlertsToday();
-    return alertes.length > 0 ? Math.max(...alertes.map((a: any) => a.level)) : 0;
+    const b = this.bulletin();
+    const typeId = this.selectionService.selectedType();
+    if (!b || !b.alertes || b.alertes.length === 0) return 0;
+
+    if (typeId !== null) {
+      const alert = b.alertes.find((a: any) => a.type === typeId);
+      return alert ? alert.level : 0;
+    }
+    return Math.max(...b.alertes.map((a: any) => a.level));
   });
 
   maxAlertLevelTomorrow = computed(() => {
-    const alertes = this.filteredAlertsTomorrow();
-    return alertes.length > 0 ? Math.max(...alertes.map((a: any) => a.level)) : 0;
+    const b = this.bulletinTomorrow();
+    const typeId = this.selectionService.selectedType();
+    if (!b || !b.alertes || b.alertes.length === 0) return 0;
+
+    if (typeId !== null) {
+      const alert = b.alertes.find((a: any) => a.type === typeId);
+      return alert ? alert.level : 0;
+    }
+    return Math.max(...b.alertes.map((a: any) => a.level));
   });
 
-  alertSummaryToday = computed(() => {
-    return this.generateAlertSummary(this.filteredAlertsToday(), this.filterLevel());
-  });
+  alertSummaryToday = computed(() => this.generateAlertSummary(this.bulletin()?.alertes));
+  alertSummaryTomorrow = computed(() => this.generateAlertSummary(this.bulletinTomorrow()?.alertes));
 
-  alertSummaryTomorrow = computed(() => {
-    return this.generateAlertSummary(this.filteredAlertsTomorrow(), this.filterLevel());
-  });
-
-  generateAlertSummary(alertes: any[], filterLevel: number | null): string {
+  generateAlertSummary(alertes: Alerte[] | undefined): string {
+    const typeId = this.selectionService.selectedType();
+    
     if (!alertes || alertes.length === 0) {
+      if (typeId !== null) {
+        return `Pas d'alerte : ${this.getAlertTypeName(typeId.toString())}`;
+      }
       return "Aucune alerte.";
     }
-    
+
+    if (typeId !== null) {
+      const alert = alertes.find(a => a.type === typeId);
+      const level = alert ? alert.level : 1;
+      const typeName = this.getAlertTypeName(typeId.toString());
+
+      if (level === 1) return `Pas d'alerte majeure`;
+      if (level === 2) return `Alerte mineure`;
+      if (level === 3) return `Alerte importante`;
+      return `Alerte majeure : ${typeName}`;
+    }
+
     const maxLevel = Math.max(...alertes.map(a => a.level));
+    const relevantAlertes = alertes.filter(a => a.level === maxLevel);
 
-    if (filterLevel !== null) {
-      if (maxLevel === 1) return "Pas d'alerte majeure.";
-      if (maxLevel === 2) return "Alertes mineures.";
-      if (maxLevel === 3) return "Alertes importantes.";
-      if (maxLevel >= 4) return "Alertes majeures.";
-    }
-    
-    if (maxLevel === 1) {
-      return "Pas d'alerte majeure.";
-    }
-
-    const typesOfMaxLevel = alertes
-      .filter(a => a.level === maxLevel)
-      .map(a => this.getAlertTypeName(a.type.toString()))
-      .join(', ');
-
-    if (maxLevel === 2) {
-      return `Il y a des alertes mineures pour : ${typesOfMaxLevel}`;
-    } else if (maxLevel === 3) {
-      return `Il y a des alertes pour : ${typesOfMaxLevel}`;
-    } else if (maxLevel >= 4) {
-      return `Il y a des alertes majeures pour : ${typesOfMaxLevel}`;
-    }
-
-    return "Aucune alerte.";
+    if (maxLevel === 1) return "Pas d'alerte majeure";
+    const types = relevantAlertes.map(a => this.getAlertTypeName(a.type.toString())).join(', ');
+    if (maxLevel === 2) return `Alertes mineures : ${types}`;
+    if (maxLevel === 3) return `Alertes importantes : ${types}`;
+    return `Alertes majeures : ${types}`;
   }
 
   getAlertTypeName(typeId: string): string {
-    if (typeId === "1") return "Vent Violent";
-    if (typeId === "2") return "Pluie-Inondation";
-    if (typeId === "3") return "Orages";
-    if (typeId === "4") return "Inondation";
-    if (typeId === "5") return "Neige-verglas";
-    if (typeId === "6") return "Canicule";
-    if (typeId === "7") return "Grand Froid";
-    if (typeId === "8") return "Avalanches";
-    if (typeId === "9") return "Vagues-Submersion";
-    return "Phénomène météo";
+    return ALERT_TYPES[typeId] || "Météo";
   }
 
   getAlertClass(): string {
-    const level = this.maxAlertLevel();
-    if (level === 1) return 'bg-green';
-    if (level === 2) return 'bg-yellow';
-    if (level === 3) return 'bg-orange';
-    if (level >= 4) return 'bg-red';
-    return 'bg-default';
+    const l = this.maxAlertLevel();
+    return ALERT_CLASSES[l] || DEFAULT_ALERT_CLASS;
   }
 
   getAlertClassTomorrow(): string {
-    const level = this.maxAlertLevelTomorrow();
-    if (level === 1) return 'bg-green';
-    if (level === 2) return 'bg-yellow';
-    if (level === 3) return 'bg-orange';
-    if (level >= 4) return 'bg-red';
-    return 'bg-default';
+    const l = this.maxAlertLevelTomorrow();
+    return ALERT_CLASSES[l] || DEFAULT_ALERT_CLASS;
   }
 }

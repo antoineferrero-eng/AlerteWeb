@@ -1,10 +1,11 @@
+/* card.css */
 :host {
   display: block;
   font-family: Arial, sans-serif;
 }
 
 .card-container {
-  width: 320px;
+  width: 100%;
   display: flex;
   flex-direction: column;
 }
@@ -32,16 +33,16 @@
 }
 
 .separator {
-  height: 2px;
+  height: 20vh;
   background-color: rgba(255, 255, 255, 0.4);
   width: 100%;
 }
 
-.bg-red { background-color: #ff3737 !important; }
-.bg-orange { background-color: #ff944d !important; }
-.bg-yellow { background-color: #ffe066 !important; }
-.bg-green { background-color: #4CAF50 !important; }
-.bg-default { background-color: #f2f8f9 !important; }
+.bg-red { background-color: var(--color-alert-4) !important; }
+.bg-orange { background-color: var(--color-alert-3) !important; }
+.bg-yellow { background-color: var(--color-alert-2) !important; }
+.bg-green { background-color: var(--color-alert-1) !important; }
+.bg-default { background-color: var(--color-alert-default) !important; }
 
 .top-row {
   display: flex;

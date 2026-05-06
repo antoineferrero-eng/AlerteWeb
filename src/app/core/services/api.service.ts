@@ -7,7 +7,7 @@ import { Observable } from 'rxjs';
 })
 export class ApiService {
   private http = inject(HttpClient);
-  private readonly API_URL = 'http://localhost:8080';
+  private readonly API_URL = '';
 
   getDepartmentsGeoJson(): Observable<any> {
     return this.http.get('/dataPoly.json');

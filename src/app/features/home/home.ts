@@ -1,8 +1,9 @@
-import { Component, inject, signal } from '@angular/core';
-import { ActivatedRoute } from '@angular/router';
+import { Component, OnInit, inject, CUSTOM_ELEMENTS_SCHEMA } from '@angular/core';
+import { ActivatedRoute, Router } from '@angular/router';
 import { MapComponent } from '../map/map';
 import { Card } from '../card/card';
 import { List } from '../list/list';
+import { SelectionService } from '../../core/services/selection.service';
 import { Navbar } from '../../layout/navbar/navbar';
 
 @Component({
@@ -10,16 +11,30 @@ import { Navbar } from '../../layout/navbar/navbar';
   standalone: true,
   imports: [MapComponent, Card, List, Navbar],
   templateUrl: './home.html',
-  styleUrl: './home.css'
+  styleUrl: './home.css',
+  schemas: [CUSTOM_ELEMENTS_SCHEMA]
 })
-export class HomeComponent {
+export class HomeComponent implements OnInit {
   private route = inject(ActivatedRoute);
-  filterLevel = signal<number | null>(null);
+  private router = inject(Router);
+  public selectionService = inject(SelectionService);
+  
+  filterLevel = this.selectionService.selectedType;
 
-  constructor() {
+  ngOnInit() {
     this.route.paramMap.subscribe(params => {
-      const level = params.get('level');
-      this.filterLevel.set(level ? parseInt(level, 10) : null);
+      const typeId = params.get('typeId');
+      
+      if (typeId === 'all') {
+        this.selectionService.updateType(null);
+      } else {
+        const numType = Number(typeId);
+        if (!isNaN(numType) && numType >= 1 && numType <= 9) {
+          this.selectionService.updateType(numType);
+        } else {
+          this.router.navigate(['/home/all']);
+        }
+      }
     });
   }
 }
