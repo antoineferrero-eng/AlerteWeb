@@ -1,11 +1,12 @@
 import { Component, AfterViewInit, inject, effect, NgZone } from '@angular/core';
 import { NgStyle } from '@angular/common';
-import { Map, LngLatBoundsLike } from 'maplibre-gl';
+import { Map as MapLibreMap, LngLatBoundsLike } from 'maplibre-gl';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 import { SelectionService } from '../../core/services/selection.service';
 import { Bulletin } from '../../core/models/bulletin.model';
 import { MAP_COLORS, DEFAULT_MAP_COLOR, getDateString } from '../../core/constants/alertes.config';
+import { AlertService } from '../../core/services/alert.service';
 
 @Component({
   selector: 'app-map',
@@ -14,11 +15,12 @@ import { MAP_COLORS, DEFAULT_MAP_COLOR, getDateString } from '../../core/constan
   templateUrl: './map.html',
   styleUrl: './map.css'
 })
-export class MapComponent implements AfterViewInit {
+export class Map implements AfterViewInit {
   private apiService = inject(ApiService);
   private selectionService = inject(SelectionService);
+  private alertService = inject(AlertService);
   private zone = inject(NgZone);
-  private map!: Map;
+  private map!: MapLibreMap;
   private allBulletins: Bulletin[] = [];
   private geoJsonData: any = null;
   private isMapReady = false;
@@ -46,7 +48,7 @@ export class MapComponent implements AfterViewInit {
   }
 
   ngAfterViewInit() {
-    this.map = new Map({
+    this.map = new MapLibreMap({
       container: 'map',
       style: 'https://api.maptiler.com/maps/019d8bf8-e2c5-713c-9f2f-2bb902febebd/style.json?key=WMoz1E5XIzcV8Oy6MxyJ',
       bounds: this.FRANCE_BOUNDS,
@@ -135,33 +137,13 @@ export class MapComponent implements AfterViewInit {
     });
   }
 
-  getColorForLevel(level: number): string {
-    return MAP_COLORS[level] || DEFAULT_MAP_COLOR;
-  }
-
   applyMapColors(filterType: number | null) {
     const couleursAplaties: any[] = [];
 
     this.allBulletins.forEach((bulletin: any) => {
       const code = bulletin.departement.num.toString();
-      let color = DEFAULT_MAP_COLOR;
-
-      if (filterType !== null) {
-        let maxLevel = 0;
-        if (bulletin.alertes && bulletin.alertes.length > 0) {
-          const specificAlert = bulletin.alertes.find((a: any) => a.type === filterType);
-          if (specificAlert) {
-            maxLevel = specificAlert.level;
-          }
-        }
-        color = this.getColorForLevel(maxLevel);
-      } else {
-        let maxLevel = 1;
-        if (bulletin.alertes && bulletin.alertes.length > 0) {
-          maxLevel = Math.max(...bulletin.alertes.map((a: any) => a.level));
-        }
-        color = this.getColorForLevel(maxLevel);
-      }
+      const maxLevel = this.alertService.getDisplayLevel(bulletin.alertes, filterType);
+      const color = this.alertService.getColorForLevel(maxLevel);
 
       couleursAplaties.push(code, color);
     });
@@ -183,7 +165,7 @@ export class MapComponent implements AfterViewInit {
     try {
       if (selected && selected.departement && selected.departement.num) {
         this.map.setFilter('highlight-departement', ['==', 'ref:INSEE', selected.departement.num.toString()]);
-
+        
         if (this.geoJsonData) {
           const feature = this.geoJsonData.features.find((f: any) => f.properties?.['ref:INSEE'] === selected.departement.num.toString());
           if (feature && feature.geometry && feature.geometry.coordinates) {

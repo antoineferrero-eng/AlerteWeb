@@ -10,16 +10,16 @@
       class="alert-item" 
       *ngFor="let bulletin of filteredBulletins()"
       [id]="'dept-' + bulletin.departement.num"
-      [ngClass]="getAlertClass(getDisplayLevel(bulletin.alertes))"
+      [ngClass]="alertService.getAlertClass(alertService.getDisplayLevel(bulletin.alertes, selectionService.selectedType()))"
       [class.selected-item]="isSelected(bulletin)"
       (click)="selectDepartement(bulletin)"
     >
       <div class="item-info">
         <span class="dept-name">{{ bulletin.departement.num }} - {{ getDeptName(bulletin.departement.num) }}</span>
-        <span class="alert-summary">{{ getAlertSummary(getFilteredAlerts(bulletin.alertes)) }}</span>
+        <span class="alert-summary">{{ alertService.getAlertSummary(bulletin.alertes, selectionService.selectedType()) }}</span>
       </div>
       <div class="item-level">
-        {{ getDisplayLevel(bulletin.alertes) }}
+        {{ alertService.getDisplayLevel(bulletin.alertes, selectionService.selectedType()) }}
       </div>
     </div>
   </div>
