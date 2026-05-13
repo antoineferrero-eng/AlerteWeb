@@ -3,11 +3,18 @@
     <img src="favicon.ico" alt="Logo" class="logo-icon">
     <a class="nav-links" routerLink="/home" routerLinkActive="active" (click)="closeMenu()">d@cAlerte</a>
   </div>
-  <button class="hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen" aria-label="Toggle menu">
-    <span></span>
-    <span></span>
-    <span></span>
-  </button>
+  <div class="nav-controls">
+    <button class="settings-btn mobile-settings" (click)="openSettings()" aria-label="Paramètres">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+        <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 5.347c-.461.16-.9.37-1.312.624l-1.341-.758a1.875 1.875 0 00-2.333.62L2.52 8.423a1.875 1.875 0 00.315 2.404l1.173 1.053a8.887 8.887 0 000 1.258l-1.173 1.053a1.875 1.875 0 00-.315 2.404l1.544 2.59a1.875 1.875 0 002.333.62l1.342-.758c.411.254.85.464 1.312.624l.178 1.53c.151.904.933 1.567 1.85 1.567h3.088c.917 0 1.699-.663 1.85-1.567l.178-1.53c.461-.16.9-.37 1.312-.624l1.342.758a1.875 1.875 0 002.333-.62l1.544-2.59a1.875 1.875 0 00-.315-2.404l-1.173-1.053a8.887 8.887 0 000-1.258l1.173-1.053a1.875 1.875 0 00.315-2.404l-1.544-2.59a1.875 1.875 0 00-2.333-.62l-1.342.758a8.9 8.9 0 00-1.312-.624l-.178-1.53A1.875 1.875 0 0014.166 2.25h-3.088zM12 15a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+      </svg>
+    </button>
+    <button class="hamburger" (click)="toggleMenu()" [class.active]="isMenuOpen" aria-label="Toggle menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </div>
   <ul class="nav-links" [class.open]="isMenuOpen">
     <li><a routerLink="/home/1" routerLinkActive="active" (click)="closeMenu()">Vent violent</a></li>
     <li><a routerLink="/home/2" routerLinkActive="active" (click)="closeMenu()">Pluie-inondation</a></li>
@@ -20,3 +27,8 @@
     <li><a routerLink="/home/9" routerLinkActive="active" (click)="closeMenu()">Vagues-submersion</a></li>
   </ul>
 </nav>
+<button class="settings-btn desktop-settings" (click)="openSettings()" aria-label="Paramètres">
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" width="24" height="24">
+    <path fill-rule="evenodd" d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 5.347c-.461.16-.9.37-1.312.624l-1.341-.758a1.875 1.875 0 00-2.333.62L2.52 8.423a1.875 1.875 0 00.315 2.404l1.173 1.053a8.887 8.887 0 000 1.258l-1.173 1.053a1.875 1.875 0 00-.315 2.404l1.544 2.59a1.875 1.875 0 002.333.62l1.342-.758c.411.254.85.464 1.312.624l.178 1.53c.151.904.933 1.567 1.85 1.567h3.088c.917 0 1.699-.663 1.85-1.567l.178-1.53c.461-.16.9-.37 1.312-.624l1.342.758a1.875 1.875 0 002.333-.62l1.544-2.59a1.875 1.875 0 00-.315-2.404l-1.173-1.053a8.887 8.887 0 000-1.258l1.173-1.053a1.875 1.875 0 00.315-2.404l-1.544-2.59a1.875 1.875 0 00-2.333-.62l-1.342.758a8.9 8.9 0 00-1.312-.624l-.178-1.53A1.875 1.875 0 0014.166 2.25h-3.088zM12 15a3 3 0 100-6 3 3 0 000 6z" clip-rule="evenodd" />
+  </svg>
+</button>

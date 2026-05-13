@@ -45,4 +45,51 @@ export class ApiService {
     }
     return this.bulletinsCache.get(date)!;
   }
+
+  // ── Config endpoints ────────────────────────────────────────────────────────
+
+  /** Récupérer la configuration complète (niveaux, types, crons) */
+  getFullConfig(): Observable<any> {
+    return this.http.get(`${this.API_URL}/config`);
+  }
+
+  /** Récupérer les niveaux d'alerte actifs */
+  getActiveLevels(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.API_URL}/config/alert-levels`);
+  }
+
+  /** Définir les niveaux d'alerte actifs */
+  setActiveLevels(levels: string[]): Observable<any> {
+    return this.http.post(`${this.API_URL}/config/alert-levels`, levels);
+  }
+
+  /** Récupérer les types d'alerte actifs */
+  getActiveTypes(): Observable<string[]> {
+    return this.http.get<string[]>(`${this.API_URL}/config/alert-types`);
+  }
+
+  /** Définir les types d'alerte actifs */
+  setActiveTypes(types: string[]): Observable<any> {
+    return this.http.post(`${this.API_URL}/config/alert-types`, types);
+  }
+
+  /** Récupérer le cron d'envoi de mail */
+  getMailCron(): Observable<{ mailCron: string }> {
+    return this.http.get<{ mailCron: string }>(`${this.API_URL}/config/mail-time`);
+  }
+
+  /** Définir le cron d'envoi de mail */
+  setMailCron(cron: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/config/mail-time`, { cron });
+  }
+
+  /** Récupérer le cron de mise à jour des données */
+  getUpdateCron(): Observable<{ updateCron: string }> {
+    return this.http.get<{ updateCron: string }>(`${this.API_URL}/config/update-time`);
+  }
+
+  /** Définir le cron de mise à jour des données */
+  setUpdateCron(cron: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/config/update-time`, { cron });
+  }
 }

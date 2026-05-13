@@ -1,0 +1,86 @@
+<h2 mat-dialog-title>Paramètres d'Alertes</h2>
+
+<mat-dialog-content class="dialog-body">
+
+  <!-- Spinner chargement initial -->
+  <div *ngIf="loading" class="loading-overlay">
+    <mat-spinner diameter="40"></mat-spinner>
+  </div>
+
+  <div class="settings-section" [class.invisible]="loading">
+
+    <!-- ── Niveaux de sévérité ── -->
+    <h3>Paramétrage des alertes automatiques</h3>
+    <p class="desc">Définissez les critères de déclenchement pour l'envoi automatique.</p>
+
+    <div class="checkbox-group">
+      <div class="group-label">Niveau de sévérité :</div>
+      <div class="checkboxes severity-grid">
+        <mat-checkbox
+          *ngFor="let level of alertLevels"
+          color="primary"
+          [checked]="isLevelSelected(level.value)"
+          (change)="toggleLevel(level.value, $event.checked)">
+          {{ level.label }}
+        </mat-checkbox>
+      </div>
+    </div>
+
+    <!-- ── Types d'aléa ── -->
+    <div class="responsive-types mt-3">
+
+      <!-- Mobile Dropdown -->
+      <mat-form-field appearance="outline" class="full-width mobile-only-types">
+        <mat-label>Type d'aléa</mat-label>
+        <mat-select multiple [(ngModel)]="selectedTypes">
+          <mat-option *ngFor="let type of alertTypes" [value]="type.value">
+            {{ type.label }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <!-- Desktop Checkboxes -->
+      <div class="checkbox-group desktop-only-types">
+        <div class="group-label">Type d'aléa :</div>
+        <div class="checkboxes types-grid">
+          <mat-checkbox
+            *ngFor="let type of alertTypes"
+            color="primary"
+            [checked]="isTypeSelected(type.value)"
+            (change)="toggleType(type.value, $event.checked)">
+            {{ type.label }}
+          </mat-checkbox>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Planification ── -->
+    <div class="time-section mt-3">
+      <h3>Planification</h3>
+      <p class="desc">Définissez les horaires d'envoi et de mise à jour automatiques (format HH:MM).</p>
+
+      <div class="time-fields">
+        <mat-form-field appearance="outline" class="time-field">
+          <mat-label>Heure de mise à jour des données</mat-label>
+          <input matInput type="time" [(ngModel)]="updateTime" required>
+          <mat-icon matSuffix>sync</mat-icon>
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="time-field">
+          <mat-label>Heure d'envoi des mails</mat-label>
+          <input matInput type="time" [(ngModel)]="mailTime" required>
+          <mat-icon matSuffix>mail</mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+
+  </div>
+</mat-dialog-content>
+
+<mat-dialog-actions align="end">
+  <button mat-button mat-dialog-close [disabled]="saving">Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="saving || loading" (click)="save()">
+    <mat-icon *ngIf="saving">hourglass_empty</mat-icon>
+    {{ saving ? 'Enregistrement…' : 'Sauvegarder' }}
+  </button>
+</mat-dialog-actions>

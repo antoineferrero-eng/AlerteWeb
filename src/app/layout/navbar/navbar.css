@@ -1,10 +1,13 @@
 :host {
-  display: block;
+  display: flex;
   width: 63%;
   margin: 15px auto;
+  gap: 15px;
+  align-items: center;
 }
 
 .navbar {
+  flex: 1;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -64,6 +67,45 @@
   border-bottom: 2px solid #007bff;
 }
 
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+.settings-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: #007bff;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.settings-btn:hover {
+  color: #ff5100;
+}
+
+.desktop-settings {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background-color: rgb(255, 255, 255);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.desktop-settings:hover {
+  transform: scale(1.05);
+}
+
+.mobile-settings {
+  display: none;
+}
+
 /* Hamburger Menu Icon */
 .hamburger {
   display: none;
@@ -98,6 +140,14 @@
 @media (max-width: 1200px) {
   :host {
     width: 95%;
+  }
+
+  .desktop-settings {
+    display: none;
+  }
+
+  .mobile-settings {
+    display: flex;
   }
 
   .hamburger {
