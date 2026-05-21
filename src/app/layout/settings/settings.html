@@ -77,10 +77,14 @@
   </div>
 </mat-dialog-content>
 
-<mat-dialog-actions align="end">
-  <button mat-button mat-dialog-close [disabled]="saving">Annuler</button>
-  <button mat-raised-button color="primary" [disabled]="saving || loading" (click)="save()">
+<mat-dialog-actions class="custom-dialog-actions">
+  <button mat-button color="accent" (click)="goToAdmin()" class="admin-btn">
+    <mat-icon>admin_panel_settings</mat-icon> <span class="btn-text">Administration</span>
+  </button>
+  <div class="spacer"></div>
+  <button mat-button mat-dialog-close [disabled]="saving" class="cancel-btn">Annuler</button>
+  <button mat-raised-button color="primary" [disabled]="saving || loading" (click)="save()" class="save-btn">
     <mat-icon *ngIf="saving">hourglass_empty</mat-icon>
-    {{ saving ? 'Enregistrement…' : 'Sauvegarder' }}
+    <span class="btn-text">{{ saving ? 'Enregistrer' : 'Sauvegarder' }}</span>
   </button>
 </mat-dialog-actions>

@@ -1,0 +1,117 @@
+<app-navbar></app-navbar>
+
+<div class="admin-layout">
+  <!-- Left Sidebar Filters -->
+  <aside class="admin-sidebar">
+    <!-- Mobile Filter Toggle -->
+    <input type="checkbox" id="mobile-filter-toggle-admin" class="mobile-filter-checkbox">
+    <label for="mobile-filter-toggle-admin" class="mobile-filter-label">
+      <div class="label-content">
+        <mat-icon>filter_list</mat-icon> <span>Filtres</span>
+      </div>
+      <mat-icon class="expand-icon">expand_more</mat-icon>
+    </label>
+
+    <div class="filters-container">
+      <div class="filter-group">
+        <label>Nom</label>
+        <div class="search-input">
+          <input type="text" placeholder="Recherche..." [(ngModel)]="filterNom" (ngModelChange)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Prenom</label>
+        <div class="search-input">
+          <input type="text" placeholder="Recherche..." [(ngModel)]="filterPrenom" (ngModelChange)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Mail</label>
+        <div class="search-input">
+          <input type="text" placeholder="Recherche..." [(ngModel)]="filterMail" (ngModelChange)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Droit</label>
+        <div class="search-input select-input">
+          <select [(ngModel)]="filterDroit" (ngModelChange)="applyFilters()">
+            <option value="all">Selectionner</option>
+            <option [ngValue]="2">Admin</option>
+            <option [ngValue]="1">Manager</option>
+            <option [ngValue]="0">Guest</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label>Region</label>
+        <div class="search-input">
+          <input type="text" placeholder="Selectionner" [(ngModel)]="filterRegion" (ngModelChange)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Table -->
+  <main class="admin-content">
+    <div *ngIf="loading" class="loading-overlay">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <div class="table-container" *ngIf="!loading">
+      <div class="table-header">
+        <div class="col">Nom</div>
+        <div class="col">Prenom</div>
+        <div class="col">Mail</div>
+        <div class="col">Droit</div>
+        <div class="col">Region</div>
+      </div>
+
+      <div class="user-card" *ngFor="let user of paginatedUsers">
+        <div class="col">{{ user.lastName || '-' }}</div>
+        <div class="col">{{ user.firstName || '-' }}</div>
+        <div class="col">{{ user.mail }}</div>
+        <div class="col">
+          <select [(ngModel)]="user.level" (ngModelChange)="updateUser(user)" class="droit-select"
+            [disabled]="user.level > 2">
+            <option [ngValue]="user.level" *ngIf="user.level > 2">admin</option>
+            <option [ngValue]="2" *ngIf="user.level <= 2">admin</option>
+            <option [ngValue]="1" *ngIf="user.level <= 2">manager</option>
+            <option [ngValue]="0" *ngIf="user.level <= 2">guest</option>
+          </select>
+        </div>
+        <div class="col">
+          <input type="text" class="region-input" [disabled]="user.level !== 1" [(ngModel)]="user.region"
+            (change)="updateUser(user)" [matAutocomplete]="autoRegion" placeholder="region">
+          <mat-autocomplete #autoRegion="matAutocomplete" (optionSelected)="updateUser(user)">
+            <mat-option *ngFor="let reg of availableRegions" [value]="reg">
+              {{ reg }}
+            </mat-option>
+          </mat-autocomplete>
+        </div>
+      </div>
+
+      <div class="pagination-controls" *ngIf="filteredUsers.length > 0">
+        <button class="pagination-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="pagination-info">Page {{ currentPage }} sur {{ totalPages }} ({{ filteredUsers.length }}
+          utilisateurs)</span>
+        <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+      <div class="no-results" *ngIf="filteredUsers.length === 0">
+        Aucun utilisateur trouvé.
+      </div>
+    </div>
+  </main>
+</div>

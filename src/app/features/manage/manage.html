@@ -1,0 +1,116 @@
+<app-navbar></app-navbar>
+
+<div class="admin-layout">
+  <!-- Left Sidebar Filters -->
+  <aside class="admin-sidebar">
+    <!-- Mobile Filter Toggle -->
+    <input type="checkbox" id="mobile-filter-toggle-manage" class="mobile-filter-checkbox">
+    <label for="mobile-filter-toggle-manage" class="mobile-filter-label">
+      <div class="label-content">
+        <mat-icon>filter_list</mat-icon> <span>Filtres</span>
+      </div>
+      <mat-icon class="expand-icon">expand_more</mat-icon>
+    </label>
+
+    <div class="filters-container">
+      <div class="region-panel">
+        <div class="region-label">Region :</div>
+        <div class="region-value">{{ authService.currentUser?.region || 'Toutes' }}</div>
+      </div>
+
+      <div class="filter-group">
+        <label for="dkCodeFilter">Dk_Code</label>
+        <div class="search-input">
+          <input id="dkCodeFilter" type="text" placeholder="Recherche..." [(ngModel)]="filterDkCode"
+            (ngModelChange)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="mailFilter">Mail</label>
+        <div class="search-input">
+          <input id="mailFilter" type="text" placeholder="Recherche..." [(ngModel)]="filterMail"
+            (ngModelChange)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </div>
+      </div>
+
+      <div class="filter-group">
+        <label for="telFilter">Tel_Portable</label>
+        <div class="search-input">
+          <input id="telFilter" type="text" placeholder="Recherche..." [(ngModel)]="filterTelPortable"
+            (ngModelChange)="applyFilters()">
+          <mat-icon>search</mat-icon>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Resource List -->
+  <main class="admin-content">
+    <div *ngIf="loading" class="loading-overlay">
+      <mat-spinner diameter="40"></mat-spinner>
+    </div>
+
+    <div class="table-container" *ngIf="!loading">
+      <div class="table-header">
+        <div class="col">DK_Code</div>
+        <div class="col">Mail</div>
+        <div class="col"></div>
+        <div class="col">Tel_Portable</div>
+        <div class="col"></div>
+        <div class="col">nb OT</div>
+      </div>
+
+      <div class="resource-card" *ngFor="let res of paginatedRessources">
+        <div class="col font-bold">{{ res.dkCode || '-' }}</div>
+        <div class="col text-muted">{{ res.email || '-' }}</div>
+        <div class="col action-col">
+          <button (click)="sendEmail(res)" class="btn-send email-btn"
+            [disabled]="res.sendingEmail || !res.email || res.email === 'null'">
+            <span *ngIf="!res.sendingEmail">Envoyer</span>
+            <span *ngIf="res.sendingEmail" class="spinner-inline"></span>
+          </button>
+        </div>
+        <div class="col text-muted">{{ res.telPortable || '-' }}</div>
+        <div class="col action-col">
+          <button (click)="sendMessage(res)" class="btn-send message-btn"
+            [disabled]="res.sendingMessage || !res.telPortable || res.telPortable === 'null'">
+            <span *ngIf="!res.sendingMessage">Envoyer</span>
+            <span *ngIf="res.sendingMessage" class="spinner-inline"></span>
+          </button>
+        </div>
+        <div class="col ot-badge-container">
+          <span class="ot-badge" [class.no-ot]="res.nbOt === 0">{{ res.nbOt }}</span>
+        </div>
+      </div>
+
+      <!-- Pagination Controls -->
+      <div class="pagination-controls" *ngIf="filteredRessources.length > 0">
+        <button class="pagination-btn" (click)="prevPage()" [disabled]="currentPage === 1">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        <span class="pagination-info">Page {{ currentPage }} sur {{ totalPages }} ({{ filteredRessources.length }}
+          ressources)</span>
+        <button class="pagination-btn" (click)="nextPage()" [disabled]="currentPage === totalPages">
+          <mat-icon>chevron_right</mat-icon>
+        </button>
+      </div>
+
+      <div class="no-results" *ngIf="filteredRessources.length === 0">
+        Aucune ressource trouvée.
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- Notification Toast -->
+<div class="toast-container" *ngIf="toast" [class.toast-success]="toast.type === 'success'"
+  [class.toast-error]="toast.type === 'error'">
+  <div class="toast-icon">
+    <mat-icon *ngIf="toast.type === 'success'">check_circle</mat-icon>
+    <mat-icon *ngIf="toast.type === 'error'">error</mat-icon>
+  </div>
+  <div class="toast-message">{{ toast.message }}</div>
+</div>

@@ -92,4 +92,59 @@ export class ApiService {
   setUpdateCron(cron: string): Observable<any> {
     return this.http.post(`${this.API_URL}/config/update-time`, { cron });
   }
+
+  // ── User management ───────────────────────────────────────────────────────
+
+  /** Récupérer tous les utilisateurs (réservé admin) */
+  getUsers(): Observable<import('../models/user.dto').UserDTO[]> {
+    return this.http.get<import('../models/user.dto').UserDTO[]>(`${this.API_URL}/users`);
+  }
+
+  /** Mettre à jour le rôle et la région d'un utilisateur */
+  updateUser(id: number, level: number, region: string | null): Observable<import('../models/user.dto').UserDTO> {
+    return this.http.patch<import('../models/user.dto').UserDTO>(`${this.API_URL}/users/${id}`, { level, region });
+  }
+
+  // ── Resource management ───────────────────────────────────────────────────
+
+  /** Récupérer toutes les ressources (réservé manager/admin) */
+  getRessources(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/ressources`);
+  }
+
+  /** Récupérer les ressources optimisées pour la page manage (avec calcul de nbOt côté backend) */
+  getManageRessources(level?: number, depts?: string[]): Observable<any[]> {
+    let url = `${this.API_URL}/ressources/manage`;
+    const params: string[] = [];
+    if (level !== undefined) {
+      params.push(`level=${level}`);
+    }
+    if (depts && depts.length > 0) {
+      params.push(`depts=${depts.join(',')}`);
+    }
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
+    }
+    return this.http.get<any[]>(url);
+  }
+
+  /** Récupérer tous les ordres de travail (OT) */
+  getOts(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/ordre-de-travails`);
+  }
+
+  /** Récupérer tous les sites */
+  getSites(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.API_URL}/sites`);
+  }
+
+  /** Déclencher manuellement l'envoi d'un email d'alerte à une ressource */
+  sendResourceEmail(dkCode: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/ressources/${dkCode}/email`, {});
+  }
+
+  /** Déclencher manuellement l'envoi d'un SMS à une ressource */
+  sendResourceMessage(dkCode: string): Observable<any> {
+    return this.http.post(`${this.API_URL}/ressources/${dkCode}/message`, {});
+  }
 }

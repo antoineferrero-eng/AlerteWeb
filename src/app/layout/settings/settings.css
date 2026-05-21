@@ -107,3 +107,29 @@
   flex: 1;
   min-width: 200px;
 }
+
+.custom-dialog-actions {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 24px;
+  margin-bottom: 0;
+}
+
+.spacer {
+  flex: 1 1 auto;
+}
+
+@media (max-width: 400px) {
+  .custom-dialog-actions {
+    padding: 8px 12px;
+  }
+  .admin-btn .btn-text {
+    display: none;
+  }
+  .admin-btn {
+    min-width: 48px !important;
+    padding: 0 8px !important;
+  }
+}

@@ -10,6 +10,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { ApiService } from '../../core/services/api.service';
 
@@ -81,6 +82,7 @@ export class SettingsDialogComponent implements OnInit {
   private api = inject(ApiService);
   private dialogRef = inject(MatDialogRef<SettingsDialogComponent>);
   private cdr = inject(ChangeDetectorRef);
+  private router = inject(Router);
 
   readonly alertLevels = ALERT_LEVELS;
   readonly alertTypes = ALERT_TYPES;
@@ -156,5 +158,10 @@ export class SettingsDialogComponent implements OnInit {
         this.saving = false;
       }
     });
+  }
+
+  goToAdmin(): void {
+    this.dialogRef.close();
+    this.router.navigate(['/admin']);
   }
 }

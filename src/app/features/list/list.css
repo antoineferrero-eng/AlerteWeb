@@ -32,7 +32,7 @@
   flex-direction: column;
   gap: 12px;
   overflow-y: auto;
-  padding-right: 8px; 
+  padding-right: 8px;
   flex: 1;
   min-height: 0;
 }
@@ -40,9 +40,11 @@
 .list-scroll-area::-webkit-scrollbar {
   width: 6px;
 }
+
 .list-scroll-area::-webkit-scrollbar-track {
   background: transparent;
 }
+
 .list-scroll-area::-webkit-scrollbar-thumb {
   background: #ccc;
   border-radius: 4px;
@@ -91,16 +93,30 @@
   color: #333;
 }
 
-.bg-red { background-color: var(--color-alert-4); }
-.bg-orange { background-color: var(--color-alert-3); }
-.bg-yellow { background-color: var(--color-alert-2); }
-.bg-green { background-color: var(--color-alert-1); }
-.bg-default { background-color: var(--color-alert-default); }
+.bg-red {
+  background-color: var(--color-alert-4);
+}
+
+.bg-orange {
+  background-color: var(--color-alert-3);
+}
+
+.bg-yellow {
+  background-color: var(--color-alert-2);
+}
+
+.bg-green {
+  background-color: var(--color-alert-1);
+}
+
+.bg-default {
+  background-color: var(--color-alert-default);
+}
 
 .alert-item.selected-item {
   border: 3px solid #2c2c2c;
   transform: scale(0.98);
-  box-shadow: inset 0 0 10px rgba(0,0,0,0.1);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 .empty-list {
